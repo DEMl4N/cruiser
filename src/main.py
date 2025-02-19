@@ -5,6 +5,7 @@ from car_state import CarState
 from lane_detector import LaneDetectionModule
 # from v2v_communication import V2VCommunication
 import numpy as np
+import cv2
 
 
 def prepare_state_modules():
