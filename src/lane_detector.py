@@ -76,8 +76,8 @@ class LaneDetectionModule:
                 cv2.imshow('Result', imgResult)
 
         ### STEP 6 : Normalization & Thresholding
-        # Mapping [(-inf,-th],(-th,th),[th,inf)] -> [-1,0,1] & Avoid Twerking when curve near zero
-        # curveThres = 10
-        # curve = curve if np.abs(curve >= curveThres) else 0
+        # Mapping [curveMin,curveMax] -> [quantizedMin,quantizedMax] ([-250,250] => [-40,40])
+        thres, curve_thres = np.float32(250.), np.float32(40.)
+        curve = -curve_thres if curve < -thres else thres if curve > thres else (curve * curve_thres / thres)
 
         return curve
