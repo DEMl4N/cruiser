@@ -1,8 +1,8 @@
 from neural_engine import NeuralEngine
 from camera_module import CameraModule
 from in_vehicle_communication import InVehicleCommunication
-from src.car_state import CarState
-from src.lane_detector import LaneDetectionModule
+from car_state import CarState
+from lane_detector import LaneDetectionModule
 # from v2v_communication import V2VCommunication
 import numpy as np
 
