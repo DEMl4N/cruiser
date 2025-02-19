@@ -3,7 +3,7 @@
 class CarState:
     def __init__(self):
         self.current_speed = 0
-        self.target_speed = 80
+        self.target_speed = 40
         self.target_lane = 0
         self.front_vehicle_dist = 0
         self.lane_offset = 0
