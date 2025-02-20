@@ -11,8 +11,8 @@ def threshold(img):
 
     # Define range of blackcolor(Lane) in HSV
     # Use ColorPicker.py for adjustment ( python ColorPicker.py )
-    lowerBlack = np.array([15, 0, 0])
-    upperBlack = np.array([179, 90, 110])
+    lowerBlack = np.array([50, 0, 25])
+    upperBlack = np.array([120, 130, 100])
 
     # Binaryization based on lane color
     maskBlack = cv2.inRange(imgHsv, lowerBlack, upperBlack)

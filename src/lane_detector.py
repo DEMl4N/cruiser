@@ -11,7 +11,7 @@ class LaneDetectionModule:
     def __init__(self):
         self.curveList = [np.int32(0)] * 5
 
-    def getLaneCurve(self, img, curLane: np.uint8, targetLane: np.uint8, display: int = 0):
+    def getLaneCurve(self, img, laneDiff: np.int8=0, display: int=0):
         imgCopy = img.copy()
         imgResult = img.copy()
 
@@ -22,12 +22,13 @@ class LaneDetectionModule:
         hT, wT, c = img.shape
 
         # Determine which region to warp according to the direction
-        # Option 1 : Use 1 ROI & move to end of lane when targetLane =/= curLane
+        # Option 1 : Change ROI when targetLane =/= curLane
         points = np.float32(
-            [[wT * 0.25, hT * 0.5], [wT * 0.75, hT * 0.5], [wT * 0.2, hT], [wT * 0.8, hT]] if targetLane == curLane \
-                else [[wT * 0.4, hT * 0.5], [wT * 0.8, hT * 0.5], [wT * 0.375, hT],
-                      [wT * 0.875, hT]] if targetLane > curLane \
-                else [[wT * 0.2, hT * 0.5], [wT * 0.6, hT * 0.5], [wT * 0.125, hT], [wT * 0.625, hT]])
+            [[wT * 0.3, hT * 0.3], [wT * 0.7, hT * 0.3], [wT * 0.1, hT], [wT * 0.9, hT]] if laneDiff == 0 \
+                else [[wT * 0.2, hT * 0.4], [wT * 0.4, hT * 0.4], [wT * 0.3, hT], [wT * 0.6, hT]] if laneDiff > 0 \
+                else [[wT * 0.6, hT * 0.4], [wT * 0.8, hT * 0.4], [wT * 0.3, hT], [wT * 0.6, hT]])
+        # Option 2 : Not change ROI, but apply bias on curve
+        # points = np.float32([[wT*0.3,hT*0.3],[wT*0.7,hT*0.3],[wT*0.1,hT],[wT*0.9,hT]])
 
         imgWarp = utils.warpImg(imgThres, points, wT, hT)
         imgWarpPoints = utils.drawPoints(imgCopy, points)
@@ -35,14 +36,15 @@ class LaneDetectionModule:
         ### STEP 3 : Calculate Gradient of Lane(= Intensity of Curve)
         # Get histogram that accumulates pixel in a column
         if display > 1:
-            middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.4,
-                                                      region=2)  # Center position for the current lane(bottom of image)
-            curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.2,
+            middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5,
+                                                      region=4)  # Center position for the current lane(bottom of image)
+            curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.3,
                                                             region=1)  # Average position of nearby roads
         else:
-            middlePoint = utils.getHistogram(imgWarp, minPer=0.4,
-                                             region=2)  # Center position for the current lane(bottom of image)
-            curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.2, region=1)  # Average position of nearby roads
+            middlePoint = utils.getHistogram(imgWarp, minPer=0.5,
+                                             region=4)  # Center position for the current lane(bottom of image)
+            curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.3, region=1)  # Average position of nearby roads
+
         curveRaw = curveAveragePoint - middlePoint if not (
                     np.isnan(middlePoint) or np.isnan(curveAveragePoint)) else 0  # Raw target curve(biased) intensity
 
@@ -76,8 +78,8 @@ class LaneDetectionModule:
                 cv2.imshow('Result', imgResult)
 
         ### STEP 6 : Normalization & Thresholding
-        # Mapping [curveMin,curveMax] -> [quantizedMin,quantizedMax] ([-250,250] => [-40,40])
-        thres, curve_thres = np.float32(250.), np.float32(40.)
-        curve = -curve_thres if curve < -thres else thres if curve > thres else (curve * curve_thres / thres)
+        # Mapping [curveMin,curveMax] -> [quantizedMin,quantizedMax] ([-160,160] => [-40,40])
+        thres, curveThres = np.float32(100.), np.float32(40.)
+        curve = -curveThres if curve < -thres else curveThres if curve > thres else (curve * curveThres / thres)
 
         return curve
