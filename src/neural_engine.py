@@ -46,7 +46,7 @@ class NeuralEngine:
                 inputs.append(self.HostDeviceMem(host_mem, device_mem))
             else:
                 outputs.append(self.HostDeviceMem(host_mem, device_mem))
-            return inputs, outputs, bindings, stream
+        return inputs, outputs, bindings, stream
 
     def infer(self, input_data):
         # Transfer input data to device

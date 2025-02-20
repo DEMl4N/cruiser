@@ -56,9 +56,8 @@ def execute_hdp():
             frame_array = np.array(frame)
             frame_resized = cv2.resize(frame, dsize=(816, 462))
             # todo!: lane detection
-            lane_offset = lane_detector.getLaneCurve(frame_resized, curLane=0, targetLane=0)
+            lane_offset = lane_detector.getLaneCurve(frame, curLane=0, targetLane=0)
             # detection_engine.infer(frame_array)
-            # lane_result = lane_detector.get_output()
             # detection_result = detection_engine.get_output()
 
             # class_id = detection_result[0][0]
