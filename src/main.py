@@ -48,7 +48,10 @@ def execute_hdp():
         print("[+] Starting HDP...")
         # run every 30ms
         while True:
-            frame = front_camera.get_frame()
+            cam_ret, frame = front_camera.read()
+            if not cam_ret:
+                print("[-] Camera read failed.")
+                break
 
             frame_array = np.array(frame)
             frame_resized = cv2.resize(frame, dsize=(816, 462))
