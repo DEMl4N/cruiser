@@ -39,13 +39,9 @@ def execute_hdp():
 
     if front_camera.isOpened():
         print("[+] Camera initialized successfully.")
-    else:
-        print("[-] Failed to initialize camera.")
-        exit()
-
-    if front_camera.isOpened():
-        print("[+] Camera initialized successfully.")
         print("[+] Starting HDP...")
+
+    try:
         # run every 30ms
         while True:
             cam_ret, frame = front_camera.read()
@@ -94,6 +90,9 @@ def execute_hdp():
             speed = car_state.current_speed + control_result[0][1]
 
             in_vehicle_communication.send_data(steering_angle, speed)
+
+    finally:
+        front_camera.release()
 
 
 
