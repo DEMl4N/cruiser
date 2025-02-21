@@ -7,7 +7,7 @@ import numpy as np
 ### ----- STEP 1 : Extract Lane Color & Remove Backgrounds ----- ###
 def threshold(img):
     # Convert BGR to HSV
-    imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    imgHsv = cv2.cuda.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # Define range of blackcolor(Lane) in HSV
     # Use ColorPicker.py for adjustment ( python ColorPicker.py )
@@ -15,6 +15,7 @@ def threshold(img):
     upperBlack = np.array([120, 130, 100])
 
     # Binaryization based on lane color
+    imgHsv = imgHsv.download()
     maskBlack = cv2.inRange(imgHsv, lowerBlack, upperBlack)
 
     return maskBlack
@@ -36,7 +37,7 @@ def warpImg(img, points: np.float32, w: int, h: int, inverse: bool = False):
                                              source)  # Destination(output 4 vertices) -> Source(origin 4 pts)
 
     # Warping with transformation matrix
-    imgWarp = cv2.warpPerspective(img, matrix, (w, h))
+    imgWarp = cv2.cuda.warpPerspective(img, matrix, (w,h))
     return imgWarp
 
 
@@ -74,6 +75,7 @@ def drawPoints(img, points):
 
 ### ----- STEP 3 : Get Histogram ----- ###
 def getHistogram(img, minPer: np.float32 = 0.5, display: bool = False, region: np.uint8 = 1):
+    img = img.download()
     # ROI(Region Of Interest) = bottom of image (1/region)
     roi = int(img.shape[0] - img.shape[0] // region)
     histValues = np.sum(img[roi::], axis=0)

@@ -36,6 +36,7 @@ def execute_hdp():
     pipeline = camera_module.gstreamer_pipeline()
     print("[+] Initializing camera...")
     front_camera = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+    gpu_frame = cv2.cuda_GpuMat()
 
     if front_camera.isOpened():
         print("[+] Camera initialized successfully.")
@@ -49,10 +50,11 @@ def execute_hdp():
                 print("[-] Camera read failed.")
                 break
 
-            frame_array = np.array(frame)
-            frame_resized = cv2.resize(frame, dsize=(816, 462))
+            gpu_frame.upload(frame)
+            gpu_img = cv2.cuda.resize(gpu_frame, dsize=(640, 480))
+            # frame_resized = cv2.resize(frame, dsize=(816, 462))
             # todo!: lane detection
-            lane_offset = lane_detector.getLaneCurve(frame_resized, laneDiff=0)
+            lane_offset = lane_detector.getLaneCurve(gpu_img, laneDiff=0)
             # detection_engine.infer(frame_array)
             # detection_result = detection_engine.get_output()
 

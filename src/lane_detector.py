@@ -19,7 +19,7 @@ class LaneDetectionModule:
         imgThres = utils.threshold(img)
 
         ### STEP 2 : Warping Lane Image
-        hT, wT, c = img.shape
+        wT, hT = img.size()
 
         # Determine which region to warp according to the direction
         # Option 1 : Change ROI when targetLane =/= curLane
@@ -30,8 +30,10 @@ class LaneDetectionModule:
         # Option 2 : Not change ROI, but apply bias on curve
         # points = np.float32([[wT*0.3,hT*0.3],[wT*0.7,hT*0.3],[wT*0.1,hT],[wT*0.9,hT]])
 
-        imgWarp = utils.warpImg(imgThres, points, wT, hT)
-        imgWarpPoints = utils.drawPoints(imgCopy, points)
+        imgThresGpu = cv2.cuda_GpuMat()
+        imgThresGpu.upload(imgThres)
+        imgWarp = utils.warpImg(imgThresGpu, points, wT, hT)
+        imgWarpPoints = utils.drawPoints(img.download(), points)
 
         ### STEP 3 : Calculate Gradient of Lane(= Intensity of Curve)
         # Get histogram that accumulates pixel in a column
