@@ -81,13 +81,13 @@ def execute_hdp():
                 car_state.target_speed,
                 lane_offset,
                 distance_delta,
-            ], dtype=np.float32
+            ], dtype=np.float16
             )
 
             control_engine.infer(input_data)
             control_result = control_engine.get_output()
             steering_angle = control_result[0][0]
-            speed = car_state.current_speed + control_result[0][1]
+            speed = control_result[0][1]
 
             in_vehicle_communication.send_data(steering_angle, speed)
 
