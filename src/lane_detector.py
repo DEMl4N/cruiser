@@ -31,27 +31,31 @@ class LaneDetectionModule:
         imgThresGpu = cv2.cuda_GpuMat()
         imgThresGpu.upload(imgThres)
         imgWarp = utils.warpImg(imgThresGpu, points, wT, hT)
-        imgWarpPoints = utils.drawPoints(img.download(), points)
+        #imgWarpPoints = utils.drawPoints(img.download(), points)
 
         ### STEP 3 : Calculate Gradient of Lane(= Intensity of Curve)
         # Get histogram that accumulates pixel in a column
         if display > 1:
-            middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5,
-                                                      region=4)  # Center position for the current lane(bottom of image)
+            """middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5,
+                                                      region=4)  # Center position for the current lane(bottom of image)"""
             curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.3,
                                                             region=2)  # Average position of nearby roads
         else:
-            middlePoint = utils.getHistogram(imgWarp, minPer=0.5,
-                                             region=4)  # Center position for the current lane(bottom of image)
+            """middlePoint = utils.getHistogram(imgWarp, minPer=0.5,
+                                             region=4)  # Center position for the current lane(bottom of image)"""
             curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.3, region=2)  # Average position of nearby roads
 
-        curveRaw = curveAveragePoint - middlePoint if not (
-                    np.isnan(middlePoint) or np.isnan(curveAveragePoint)) else 0  # Raw target curve(biased) intensity
+        curveRaw = curveAveragePoint - wT//2 if not np.isnan(curveAveragePoint) else 0  # Raw target curve(biased) intensity
 
-        ### STEP 4 : Smoothing Curve Using LPF Filter
+        ### STEP 4 : Normalization & Thresholding
+        # Mapping [curveMin,curveMax] -> [quantizedMin,quantizedMax] ([-160,160] => [-40,40])
+        thres, curveThres = np.float32(250.), np.float32(40.)
+        curve = -curveThres if curveRaw < -thres else curveThres if curveRaw > thres else (curveRaw * curveThres / thres)
+
+        ### STEP 5 : Smoothing Curve Using LPF Filter
         curve = utils.smoothingCurve(self.curveList, curveRaw)
 
-        ### STEP 5 : Display
+        ### STEP 6 : Display
         if display > 0:
             imgInvWarp = utils.warpImg(imgWarp, points, wT, hT, inverse=True)
             # imgInvWarp[0 : hT//3, 0 : wT] = 0   # Masking the top of inv Image
@@ -72,14 +76,10 @@ class LaneDetectionModule:
                 cv2.line(imgResult, (w * x + curve // 50, midY - 10), (w * x + curve // 50, midY + 10), (0, 0, 255), 2)
 
             if display > 1:
+                imgWarpPoints = utils.drawPoints(img.download(), points)
                 imgStacked = utils.stackImage(0.7, ([img, imgWarpPoints, imgWarp], [imgHist, imgLaneColor, imgResult]))
                 cv2.imshow('ImageStack', imgStacked)
             else:
                 cv2.imshow('Result', imgResult)
-
-        ### STEP 6 : Normalization & Thresholding
-        # Mapping [curveMin,curveMax] -> [quantizedMin,quantizedMax] ([-160,160] => [-40,40])
-        thres, curveThres = np.float32(100.), np.float32(40.)
-        curve = -curveThres if curve < -thres else curveThres if curve > thres else (curve * curveThres / thres)
 
         return curve
