@@ -99,13 +99,18 @@ def getHistogram(img, minPer: np.float32 = 0.5, display: bool = False, region: n
 
 
 ### ----- STEP 4 : Smoothing Curve ----- ###
-def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 5):
+def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 8, OUTLIER_THRESHOLD: int = 10):
+    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
+    avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
+    # Discard if curveRaw is an outlier
+    if abs(curveRaw - avg) > OUTLIER_THRESHOLD:
+        return avg
+
     # Moving Average (default window size = 5)
     curveList.append(curveRaw)
     while len(curveList) > maxWindow:
         curveList.pop(0)  # Pop old values
 
-    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
     avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
 
     return avg

@@ -9,12 +9,10 @@ import lane_utils as utils
 # Get lane curve's trend
 class LaneDetectionModule:
     def __init__(self):
-        self.curveList = [np.int32(0)] * 5
+        self.curveList = [np.int32(0)] * 8
+        self.OUTLIER_THRESHOLD = 10
 
     def getLaneCurve(self, img, laneDiff: np.int8=0, display: int=0):
-        imgCopy = img.copy()
-        imgResult = img.copy()
-
         ### STEP 1 : Find Lane & Binarization
         imgThres = utils.threshold(img)
 
@@ -41,11 +39,11 @@ class LaneDetectionModule:
             middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5,
                                                       region=4)  # Center position for the current lane(bottom of image)
             curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.3,
-                                                            region=1)  # Average position of nearby roads
+                                                            region=2)  # Average position of nearby roads
         else:
             middlePoint = utils.getHistogram(imgWarp, minPer=0.5,
                                              region=4)  # Center position for the current lane(bottom of image)
-            curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.3, region=1)  # Average position of nearby roads
+            curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.3, region=2)  # Average position of nearby roads
 
         curveRaw = curveAveragePoint - middlePoint if not (
                     np.isnan(middlePoint) or np.isnan(curveAveragePoint)) else 0  # Raw target curve(biased) intensity

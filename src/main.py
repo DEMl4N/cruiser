@@ -16,7 +16,7 @@ def prepare_neural_modules():
     lane_detector = LaneDetectionModule()
     # detection_engine = NeuralEngine("./obj_detect_v1.engine")
     # prediction_engine = NeuralEngine("./predict_v1.engine")
-    control_engine = NeuralEngine("./control_v1.engine")
+    control_engine = NeuralEngine("./control_v2.engine")
 
     # return front_camera, lane_detector, detection_engine, prediction_engine, control_engine
     return lane_detector, None, None, control_engine
