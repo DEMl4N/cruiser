@@ -7,7 +7,7 @@ import numpy as np
 ### ----- STEP 1 : Extract Lane Color & Remove Backgrounds ----- ###
 def threshold(img):
     # Convert BGR to HSV
-    imgHsv = cv2.cuda.cvtColor(img, cv2.COLOR_BGR2HSV)
+    imgHsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # Define range of blackcolor(Lane) in HSV
     # Use ColorPicker.py for adjustment ( python ColorPicker.py )
@@ -15,7 +15,6 @@ def threshold(img):
     upperBlack = np.array([120, 130, 100])
 
     # Binaryization based on lane color
-    imgHsv = imgHsv.download()
     maskBlack = cv2.inRange(imgHsv, lowerBlack, upperBlack)
 
     return maskBlack
@@ -37,7 +36,7 @@ def warpImg(img, points: np.float32, w: int, h: int, inverse: bool = False):
                                              source)  # Destination(output 4 vertices) -> Source(origin 4 pts)
 
     # Warping with transformation matrix
-    imgWarp = cv2.cuda.warpPerspective(img, matrix, (w,h))
+    imgWarp = cv2.warpPerspective(img, matrix, (w, h))
     return imgWarp
 
 
@@ -75,7 +74,6 @@ def drawPoints(img, points):
 
 ### ----- STEP 3 : Get Histogram ----- ###
 def getHistogram(img, minPer: np.float32 = 0.5, display: bool = False, region: np.uint8 = 1):
-    img = img.download()
     # ROI(Region Of Interest) = bottom of image (1/region)
     roi = int(img.shape[0] - img.shape[0] // region)
     histValues = np.sum(img[roi::], axis=0)
@@ -99,18 +97,13 @@ def getHistogram(img, minPer: np.float32 = 0.5, display: bool = False, region: n
 
 
 ### ----- STEP 4 : Smoothing Curve ----- ###
-def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 8, OUTLIER_THRESHOLD: int = 10):
-    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
-    avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
-    # Discard if curveRaw is an outlier
-    if abs(curveRaw - avg) > OUTLIER_THRESHOLD:
-        return avg
-
+def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 5):
     # Moving Average (default window size = 5)
     curveList.append(curveRaw)
     while len(curveList) > maxWindow:
         curveList.pop(0)  # Pop old values
 
+    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
     avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
 
     return avg

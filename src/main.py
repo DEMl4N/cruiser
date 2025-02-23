@@ -2,10 +2,12 @@ from neural_engine import NeuralEngine
 from in_vehicle_communication import InVehicleCommunication
 from car_state import CarState
 from lane_detector import LaneDetectionModule
+from yolo import ODEngine
 # from v2v_communication import V2VCommunication
 import camera_module
 import numpy as np
 import cv2
+import time
 
 
 def prepare_state_modules():
@@ -14,12 +16,12 @@ def prepare_state_modules():
 
 def prepare_neural_modules():
     lane_detector = LaneDetectionModule()
-    # detection_engine = NeuralEngine("./obj_detect_v1.engine")
+    detection_engine = ODEngine("./obj_detect_v1.engine")
     # prediction_engine = NeuralEngine("./predict_v1.engine")
     control_engine = NeuralEngine("./control_v2.engine")
 
     # return front_camera, lane_detector, detection_engine, prediction_engine, control_engine
-    return lane_detector, None, None, control_engine
+    return lane_detector, detection_engine, None, control_engine
 
 def prepare_communcation_modules(car_state: CarState):
     in_vehicle_communication = InVehicleCommunication(car_state=car_state)
@@ -49,13 +51,16 @@ def execute_hdp():
             if not cam_ret:
                 print("[-] Camera read failed.")
                 break
+            time_total_start = time.time()
 
             gpu_frame.upload(frame)
             gpu_img = cv2.cuda.resize(gpu_frame, dsize=(640, 480))
-            # frame_resized = cv2.resize(frame, dsize=(816, 462))
-            # todo!: lane detection
+
+            input_image = np.array(frame, dtype=np.float32)
+            input_image /= 255.0
+
+            detection_engine.infer(input_image)
             lane_offset = lane_detector.getLaneCurve(gpu_img, laneDiff=0)
-            # detection_engine.infer(frame_array)
             # detection_result = detection_engine.get_output()
 
             # class_id = detection_result[0][0]
@@ -66,15 +71,24 @@ def execute_hdp():
             # prediction_result = prediction_engine.get_output()
             # front_vehicle_next_x = prediction_result[0][0]
             front_vehicle_next_x = 0
-            # front_vehicle_next_dist = prediction_result[1][0]
-            front_vehicle_next_dist = 1
+            # front_vehicle_height = prediction_result[1][0]
+            front_vehicle_height = 1
+
+            if front_vehicle_height > car_state.AEB_THRESHOLD:
+                car_state.update_aeb_state(True)
+                in_vehicle_communication.send_data(0, 0)
+                continue
+            else:
+                car_state.update_aeb_state(False)
 
             # lane_offset = lane_result[0][0]
 
             front_vehicle_x_delta = -1
             distance_delta = 1
-            if car_state.front_vehicle_dist != 0:
-                distance_delta = min(front_vehicle_next_dist / car_state.front_vehicle_dist, 1)
+            if front_vehicle_height != 0:
+                distance_delta = min(car_state.front_vehicle_height_previous / front_vehicle_height, 1)
+
+            car_state.update_front_vehicle_height_previous(front_vehicle_height)
 
             input_data = np.array([
                 front_vehicle_next_x,
@@ -88,14 +102,16 @@ def execute_hdp():
 
             control_engine.infer(input_data)
             control_result = control_engine.get_output()
-            steering_angle = control_result[0][0]
-            speed = control_result[0][1]
+            steering_angle = max(min(control_result[0][0], 60), -60)
+            speed = max(min(control_result[0][1], 100), 0)
 
             in_vehicle_communication.send_data(steering_angle, speed)
+            time_total_end = time.time()
+            time_total_elapsed = time_total_end - time_total_start
+            print(f"Time elapsed: {time_total_elapsed:.3f}s")
 
     finally:
         front_camera.release()
-
 
 
 def main():

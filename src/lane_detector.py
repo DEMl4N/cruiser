@@ -10,7 +10,9 @@ import lane_utils as utils
 class LaneDetectionModule:
     def __init__(self):
         self.curveList = [np.int32(0)] * 8
-        self.OUTLIER_THRESHOLD = 10
+        self.OUTLIER_THRESHOLD = 20
+
+    def
 
     def getLaneCurve(self, img, laneDiff: np.int8=0, display: int=0):
         ### STEP 1 : Find Lane & Binarization
