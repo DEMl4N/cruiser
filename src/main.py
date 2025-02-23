@@ -66,7 +66,7 @@ def execute_hdp():
             gpu_frame.upload(frame)
             gpu_img = cv2.cuda.resize(gpu_frame, dsize=(640, 480))
 
-            input_image = np.array(frame, dtype=np.float32)
+            input_image = np.array([frame], dtype=np.float32)
             input_image /= 255.0
 
             detection_engine.infer(input_image)

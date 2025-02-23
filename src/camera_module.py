@@ -5,8 +5,8 @@ def gstreamer_pipeline(
         sensor_id=0,
         capture_width=3264,
         capture_height=1848,
-        display_width=816,
-        display_height=462,
+        display_width=640,
+        display_height=640,
         framerate=28,
         flip_method=0
 ):
