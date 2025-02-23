@@ -41,12 +41,12 @@ class LaneDetectionModule:
         if display > 1:
             """middlePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.5,
                                                       region=4)  # Center position for the current lane(bottom of image)"""
-            curveAveragePoint, imgHist = utils.getHistogram(imgWarp, display=True, minPer=0.3,
+            curveAveragePoint, imgHist = utils.getHistogram(imgWarp.download(), display=True, minPer=0.3,
                                                             region=2)  # Average position of nearby roads
         else:
             """middlePoint = utils.getHistogram(imgWarp, minPer=0.5,
                                              region=4)  # Center position for the current lane(bottom of image)"""
-            curveAveragePoint = utils.getHistogram(imgWarp, minPer=0.3, region=2)  # Average position of nearby roads
+            curveAveragePoint = utils.getHistogram(imgWarp.download(), minPer=0.3, region=2)  # Average position of nearby roads
 
         curveRaw = curveAveragePoint - wT//2 if not np.isnan(curveAveragePoint) else 0  # Raw target curve(biased) intensity
 
