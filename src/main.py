@@ -53,6 +53,16 @@ def execute_hdp():
                 break
             time_total_start = time.time()
 
+            # Lane Changing
+            if car_state.lane_change_state:
+                if car_state.lane == 0:
+                    lane_detector.update_curve_list([np.int32(20)] * 5)
+                    car_state.lane = 1
+                if car_state.lane == 1:
+                    lane_detector.update_curve_list([np.int32(-20)] * 5)
+                    car_state.lane = 0
+                car_state.lane_change_state = False
+
             gpu_frame.upload(frame)
             gpu_img = cv2.cuda.resize(gpu_frame, dsize=(640, 480))
 
@@ -61,11 +71,10 @@ def execute_hdp():
 
             detection_engine.infer(input_image)
             lane_offset = lane_detector.getLaneCurve(gpu_img, laneDiff=0)
-            # detection_result = detection_engine.get_output()
+            detection_result = detection_engine.get_output()
 
-            # class_id = detection_result[0][0]
-            # box = detection_result[1][0]
-            # confidence = detection_result[2][0]
+            class_id = detection_result[0]
+            box = detection_result[1][0]
             # prediction_engine.infer(box)
 
             # prediction_result = prediction_engine.get_output()
@@ -76,14 +85,17 @@ def execute_hdp():
 
             if front_vehicle_height > car_state.AEB_THRESHOLD:
                 car_state.update_aeb_state(True)
-                in_vehicle_communication.send_data(0, 0)
-                continue
             else:
                 car_state.update_aeb_state(False)
+
+            if car_state.aeb_state:
+                in_vehicle_communication.send_data(0, 0)
+                continue
 
             # lane_offset = lane_result[0][0]
 
             front_vehicle_x_delta = -1
+
             distance_delta = 1
             if front_vehicle_height != 0:
                 distance_delta = min(car_state.front_vehicle_height_previous / front_vehicle_height, 1)

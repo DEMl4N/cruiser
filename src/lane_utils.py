@@ -36,7 +36,7 @@ def warpImg(img, points: np.float32, w: int, h: int, inverse: bool = False):
                                              source)  # Destination(output 4 vertices) -> Source(origin 4 pts)
 
     # Warping with transformation matrix
-    imgWarp = cv2.warpPerspective(img, matrix, (w, h))
+    imgWarp = cv2.cuda.warpPerspective(img, matrix, (w, h))
     return imgWarp
 
 
@@ -97,13 +97,18 @@ def getHistogram(img, minPer: np.float32 = 0.5, display: bool = False, region: n
 
 
 ### ----- STEP 4 : Smoothing Curve ----- ###
-def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 5):
+def smoothingCurve(curveList: np.ndarray, curveRaw: np.int32, maxWindow: int = 5, OUTLIER_THRESHOLD: int = 30):
     # Moving Average (default window size = 5)
+    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
+    avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
+
+    if abs(curveRaw - avg) > OUTLIER_THRESHOLD:
+        return avg
+
     curveList.append(curveRaw)
     while len(curveList) > maxWindow:
         curveList.pop(0)  # Pop old values
 
-    weight = np.flip(np.arange(maxWindow, dtype=int), axis=0) + 1
     avg = np.int32(np.average(curveList, weights=weight))  # Weighted average
 
     return avg

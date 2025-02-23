@@ -9,12 +9,15 @@ import lane_utils as utils
 # Get lane curve's trend
 class LaneDetectionModule:
     def __init__(self):
-        self.curveList = [np.int32(0)] * 8
-        self.OUTLIER_THRESHOLD = 20
+        self.curveList = [np.int32(0)] * 5
+        self.OUTLIER_THRESHOLD = 30
+
+    def update_curve_list(self, lane_curve):
+        self.curveList = lane_curve
 
     def getLaneCurve(self, img, laneDiff: np.int8=0, display: int=0):
         ### STEP 1 : Find Lane & Binarization
-        imgThres = utils.threshold(img)
+        imgThres = utils.threshold(img.download())
 
         ### STEP 2 : Warping Lane Image
         wT, hT = img.size()
@@ -53,7 +56,7 @@ class LaneDetectionModule:
         curve = -curveThres if curveRaw < -thres else curveThres if curveRaw > thres else (curveRaw * curveThres / thres)
 
         ### STEP 5 : Smoothing Curve Using LPF Filter
-        curve = utils.smoothingCurve(self.curveList, curveRaw)
+        curve = utils.smoothingCurve(self.curveList, curveRaw, )
 
         ### STEP 6 : Display
         if display > 0:
