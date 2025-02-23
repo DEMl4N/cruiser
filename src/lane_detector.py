@@ -12,8 +12,6 @@ class LaneDetectionModule:
         self.curveList = [np.int32(0)] * 8
         self.OUTLIER_THRESHOLD = 20
 
-    def
-
     def getLaneCurve(self, img, laneDiff: np.int8=0, display: int=0):
         ### STEP 1 : Find Lane & Binarization
         imgThres = utils.threshold(img)

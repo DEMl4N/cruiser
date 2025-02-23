@@ -6,7 +6,7 @@ import time
 import cv2
 import os
 
-from src.neural_engine import NeuralEngine
+from neural_engine import NeuralEngine
 
 
 class ODEngine(NeuralEngine):
@@ -18,12 +18,11 @@ class ODEngine(NeuralEngine):
     # 		self.host = host_mem
     # 		self.device = device_mem
 
-    def allocate_buffers(self):
+    def allocate_buffers(self, engine):
         inputs, outputs, allocations = [], [], []
+        stream = cuda.Stream()
 
-        # print(f"self.engine.numbindings={self.engine.num_bindings}, num_layers={self.engine.num_layers}")
-
-        for i in range(self.engine.num_bindings):
+        for i in range(engine.num_bindings):
             is_input = False
             if self.engine.binding_is_input(i):
                 is_input = True
@@ -63,7 +62,7 @@ class ODEngine(NeuralEngine):
                 inputs.append(binding)
             else:
                 outputs.append(binding)
-        return inputs, outputs, allocations
+        return inputs, outputs, allocations, stream
 
     def infer(self, input_image):
         # Transfer input data to device
